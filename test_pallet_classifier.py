@@ -3,7 +3,7 @@ import os
 import cv2
 
 pallet_cascade = cv2.CascadeClassifier()
-pallet_cascade.load(cv2.samples.findFile('europallet/europallet_9_classifier/cascade.xml'))
+pallet_cascade.load(cv2.samples.findFile('europallet/video_positives_classifier/cascade.xml'))
 
 
 def detect(frame):
@@ -12,7 +12,7 @@ def detect(frame):
     frame_gray = cv2.equalizeHist(frame_gray)
 
     # Detect pallet
-    pallets = pallet_cascade.detectMultiScale(frame_gray, 1.01, 3)
+    pallets = pallet_cascade.detectMultiScale(frame_gray, 1.01)
     return pallets
 
 
