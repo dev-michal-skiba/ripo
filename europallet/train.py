@@ -3,6 +3,7 @@ Used combinations:
     - `python train.py --width 38 --height 24 --min-ratio 1.1 --max-ratio 2.1`
     - `python train.py --width 32 --height 24 --min-ratio 1.2 --max-ratio 1.4`
     - `python train.py --width 40 --height 30 --min-ratio 1.2 --max-ratio 1.4`
+    - `python train.py --width 33 --height 24 --min-ratio 0.8 --max-ratio 2.0 --positives-filepath video_positives/front/ --output-suffix front`
 """
 
 
@@ -21,14 +22,18 @@ def get_args():
     parser.add_argument('--height', dest='height', type=int, required=True)
     parser.add_argument('--min-ratio', dest='min_ratio', type=float, required=True)
     parser.add_argument('--max-ratio', dest='max_ratio', type=float, required=True)
+    parser.add_argument('--positives-filepath', dest='positives_filepath', type=str, required=True)
+    parser.add_argument('--output-suffix', dest='output_suffix', type=str, required=True)
     args = parser.parse_args()
-    return args.width, args.height, args.min_ratio, args.max_ratio
+    return args.width, args.height, args.min_ratio, args.max_ratio, args.positives_filepath, args.output_suffix
 
 
-def get_filepaths(min_ratio, max_ratio):
+def get_filepaths(min_ratio, max_ratio, positives_filepath):
     filepaths = []
-    for filename in os.listdir('positives'):
-        filepath = f'positives/{filename}'
+    for filename in os.listdir(positives_filepath):
+        filepath = f'{positives_filepath}/{filename}'
+        if os.path.isdir(filepath):
+            continue
         img = cv2.imread(filepath)
         height = img.shape[0]
         width = img.shape[1]
@@ -39,10 +44,10 @@ def get_filepaths(min_ratio, max_ratio):
 
 
 def main():
-    width, height, min_ratio, max_ratio = get_args()
+    width, height, min_ratio, max_ratio, positives_filepath, output_suffix = get_args()
     name = f"{width}_{height}_{str(min_ratio).replace('.', 'p')}" \
-           f"_{str(max_ratio).replace('.', 'p')}"
-    filepaths = get_filepaths(min_ratio, max_ratio)
+           f"_{str(max_ratio).replace('.', 'p')}_{output_suffix}"
+    filepaths = get_filepaths(min_ratio, max_ratio, positives_filepath)
     if os.path.isdir(name) is False:
         os.mkdir(name)
     samples_number = math.ceil(TOTAL_SAMPLES_NUMBER / len(filepaths))

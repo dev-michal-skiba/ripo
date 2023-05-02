@@ -96,6 +96,7 @@ video_positives/1083.jpg 1 76 213 203 105
 video_positives/1084.jpg 1 73 209 204 110
 video_positives/1085.jpg 1 72 211 203 106
 video_positives/1086.jpg 1 73 210 205 109
+video_positives/1087.jpg 1 73 210 205 109
 video_positives/109.jpg 1 340 114 80 62
 video_positives/11.jpg 1 340 115 81 60
 video_positives/110.jpg 1 340 116 79 58
@@ -518,7 +519,7 @@ video_positives/486.jpg 0
 video_positives/487.jpg 0
 video_positives/488.jpg 0
 video_positives/489.jpg 0
-video_positives/49.jpg 0
+video_positives/49.jpg 1 337 112 84 67
 video_positives/490.jpg 0
 video_positives/491.jpg 0
 video_positives/492.jpg 0
@@ -541,7 +542,7 @@ video_positives/506.jpg 0
 video_positives/507.jpg 0
 video_positives/508.jpg 0
 video_positives/509.jpg 0
-video_positives/51.jpg 0
+video_positives/51.jpg 1 337 112 84 67
 video_positives/510.jpg 1 1 205 143 140
 video_positives/511.jpg 1 0 203 148 134
 video_positives/512.jpg 1 1 197 151 128
@@ -1047,7 +1048,7 @@ video_positives/962.jpg 1 92 111 133 46
 video_positives/963.jpg 1 107 112 121 50
 video_positives/964.jpg 1 103 113 131 48
 video_positives/965.jpg 1 112 116 124 47
-video_positives/966.jpg 0
+video_positives/966.jpg 1 107 115 136 50
 video_positives/967.jpg 1 107 115 136 50
 video_positives/968.jpg 1 111 118 129 48
 video_positives/969.jpg 1 115 118 128 56

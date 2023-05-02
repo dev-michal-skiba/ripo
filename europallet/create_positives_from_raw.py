@@ -1,8 +1,12 @@
 import cv2
 
+ANNOTATIONS_FILEPATH = "video_positives_side_annotations.txt"
+IMAGES_PATH_FORMAT = "video_positives/side/img_{counter}.jpg"
+
+
 if __name__ == '__main__':
     counter = 0
-    with open('positives_raw.txt') as file:
+    with open(ANNOTATIONS_FILEPATH) as file:
         for line in file.readlines():
             line = line.strip('\n')
             if not line:
@@ -29,5 +33,5 @@ if __name__ == '__main__':
                 if y + height >= max_height:
                     height = max_height - y - 1
                 cropped_img = img[y:y + height, x:x + width].copy()
-                cv2.imwrite(f'positives/img_{counter}.jpg', cropped_img)
+                cv2.imwrite(IMAGES_PATH_FORMAT.format(counter=counter), cropped_img)
                 counter += 1
