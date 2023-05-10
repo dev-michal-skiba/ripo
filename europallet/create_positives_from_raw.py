@@ -1,7 +1,7 @@
 import cv2
 
-ANNOTATIONS_FILEPATH = "video_positives_side_annotations.txt"
-IMAGES_PATH_FORMAT = "video_positives/side/img_{counter}.jpg"
+ANNOTATIONS_FILEPATH = "positives_raw.txt"
+IMAGES_PATH_FORMAT = "positives/img_{counter}.jpg"
 
 
 if __name__ == '__main__':

@@ -2,9 +2,9 @@ import os
 
 import cv2
 
-KEY = "side"
+KEY = "mixed"
 
-IMAGES_PATH = f"video_positives/{KEY}/cropped/"
+IMAGES_PATH = f"video_positives/{KEY}/cropped"
 ANNOTATIONS_FILENAME = f"video_positives_{KEY}_cropped_annotations.txt"
 
 

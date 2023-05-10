@@ -3,9 +3,9 @@ import os
 import cv2
 from matplotlib import pyplot as plt
 
-KEY = "side"
+KEY = "mixed"
 
-POSITIVES_FILEPATH = f"video_positives/{KEY}/"
+POSITIVES_FILEPATH = f"video_positives/{KEY}/cropped"
 OUTPUT_FILENAME = f"ratio_plot_video_positives_{KEY}.png"
 
 
