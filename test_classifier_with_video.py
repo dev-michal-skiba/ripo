@@ -73,8 +73,8 @@ def detect_blue_dot(frame):
     max_x = int(EXPECTED_BLUE_DOT_AREA["MAX_X"] * width)
     frame = frame[min_y:max_y, min_x:max_x]
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lower_blue = np.array([60, 35, 140])
-    upper_blue = np.array([180, 255, 255])
+    lower_blue = np.array([110, 75, 140])
+    upper_blue = np.array([130, 215, 255])
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
     frame = cv2.bitwise_and(frame, frame, mask=mask)
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
@@ -167,7 +167,7 @@ def play_video():
                     frame, "Blue dot", (x - r, y - r - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                     (255, 0, 0), 1, cv2.LINE_AA
                 )
-                frame = cv2.rectangle(frame, (x - r, y - r), (x + 2 * r, y + 2 * r), (255, 0, 0), 2)
+                frame = cv2.rectangle(frame, (x - r, y - r), (x + r, y + r), (255, 0, 0), 2)
             cv2.imshow('video', frame)
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
         else:
