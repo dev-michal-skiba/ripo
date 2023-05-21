@@ -27,9 +27,9 @@ PALLET_CLASSIFICATORS_INFO = [
     },
 ]
 
-# OFFSET = 0  # for full/front testing
-# OFFSET = 1750  # for mixed testing
-OFFSET = 6000  # for side testing
+OFFSET = 0  # for full/front testing
+# OFFSET = 1750  # for angle testing
+# OFFSET = 6000  # for side testing
 # OFFSET = 2700  # for blue dot testing
 
 EXPECTED_BLUE_DOT_AREA = {
@@ -43,7 +43,7 @@ EXPECTED_BLUE_DOT_AREA = {
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--video-path', dest='video_path', type=str, default='./YDXJ0465-001.MP4')
-    parser.add_argument('--step', dest='step', type=int, default=12)
+    parser.add_argument('--step', dest='step', type=int, default=6)
     args = parser.parse_args()
     return args.video_path, args.step
 
@@ -109,6 +109,31 @@ def get_blue_dot_info(frame):
     ]
 
 
+def get_empty_spot_info(res_frame):
+    res_frame = res_frame.copy()
+    hsv = cv2.cvtColor(res_frame, cv2.COLOR_BGR2HSV)
+    lower_blue = np.array([90, 75, 140])
+    upper_blue = np.array([150, 215, 255])
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    frame = cv2.bitwise_and(res_frame, res_frame, mask=mask)
+    frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    _, frame = cv2.threshold(frame, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    contours, hierarchy = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    empty_spots_info = []
+    for contour in contours:
+        perimeter = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(approx) == 4 and cv2.isContourConvex(approx) and cv2.contourArea(approx) >= 1000:
+            x, y, w, h = cv2.boundingRect(approx)
+            empty_spots_info.append({
+                "text": "Puste pole",
+                "cords": [[x, y, w, h]],
+                "colour": (0, 255, 0)
+            })
+    return empty_spots_info
+
+
 def play_video():
     video_path, step = get_args()
     objects_info = []
@@ -132,6 +157,7 @@ def play_video():
                 objects_info = []
                 objects_info += get_pallets_info(frame)
                 objects_info += get_blue_dot_info(frame)
+                objects_info += get_empty_spot_info(frame)
 
             # Zaznaczaj obiekty na każdej klatce
             for object_info in objects_info:
