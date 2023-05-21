@@ -5,23 +5,23 @@ import numpy as np
 
 PALLET_CLASSIFICATORS_INFO = [
     {
-        "name": "Paleta",
+        "text": "Paleta",
         "key": "front",
-        "filepath": "europallet/33_24_0p8_2p0_front_ann_cropped_classifier/cascade.xml",
+        "filepath": "europallet/front.xml",  # 33 24
         "colour": (0, 0, 255),
         "classificator": None
     },
     {
-        "name": "Paleta",
+        "text": "Paleta",
         "key": "angle",
-        "filepath": "europallet/43_24_0p9_2p6_mixed_ann_cropped_classifier/cascade.xml",
+        "filepath": "europallet/angle.xml",  # 43 24
         "colour": (0, 0, 255),
         "classificator": None
     },
     {
-        "name": "Paleta",
-        "key": "angle",
-        "filepath": "europallet/51_24_0p9_4p7_side_ann_classifier/cascade.xml",
+        "text": "Paleta",
+        "key": "side",
+        "filepath": "europallet/side.xml",  # 51 24
         "colour": (0, 0, 255),
         "classificator": None
     },
@@ -29,8 +29,8 @@ PALLET_CLASSIFICATORS_INFO = [
 
 # OFFSET = 0  # for full/front testing
 # OFFSET = 1750  # for mixed testing
-# OFFSET = 6000  # for side testing
-OFFSET = 2700  # for blue dot testing
+OFFSET = 6000  # for side testing
+# OFFSET = 2700  # for blue dot testing
 
 EXPECTED_BLUE_DOT_AREA = {
     "MIN_X": 0.3,
@@ -55,17 +55,29 @@ def load_classificators():
         pallet_classificator_info["classificator"] = pallet_classificator
 
 
-def detect(frame, pallet_classificator):
-    # Apply filters before recognition, turn into gray and equalize hist
-    _frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    _frame_gray = cv2.equalizeHist(_frame_gray)
-
-    # Detect pallet
-    _pallets = pallet_classificator.detectMultiScale(_frame_gray, 1.03, 3)
-    return _pallets
+def get_resized_frame(frame, reduce_factor=1):
+    height, width, layers = frame.shape
+    new_h = int(height / reduce_factor)
+    new_w = int(width / reduce_factor)
+    return cv2.resize(frame, (new_w, new_h))
 
 
-def detect_blue_dot(frame):
+def get_pallets_info(frame):
+    pallets_info = []
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frame = cv2.equalizeHist(frame)
+    for pallet_classificator_info in PALLET_CLASSIFICATORS_INFO:
+        pallet_classificator = pallet_classificator_info["classificator"]
+        pallet_cords = pallet_classificator.detectMultiScale(frame, 1.03, 3)
+        pallets_info.append({
+            "text": pallet_classificator_info["text"],
+            "cords": pallet_cords,
+            "colour": pallet_classificator_info["colour"]
+        })
+    return pallets_info
+
+
+def get_blue_dot_info(frame):
     height, width, _ = frame.shape
     min_y = int(EXPECTED_BLUE_DOT_AREA["MIN_Y"] * height)
     max_y = int(EXPECTED_BLUE_DOT_AREA["MAX_Y"] * height)
@@ -79,23 +91,28 @@ def detect_blue_dot(frame):
     frame = cv2.bitwise_and(frame, frame, mask=mask)
     frame = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50, param2=20, minRadius=0,
-                               maxRadius=20)
+    circles = cv2.HoughCircles(
+        gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50, param2=20, minRadius=0, maxRadius=20
+    )
     if circles is None:
-        return None
+        return []
     cords = circles[0][0]
     x = min_x + int(cords[0])
     y = min_y + int(cords[1])
     r = int(cords[2])
-    return x, y, r
+    return [
+        {
+            "text": "Blue dot",
+            "cords": [[x - r, y - r, 2 * r, 2 * r]],
+            "colour": (255, 0, 0)
+        }
+    ]
 
 
 def play_video():
     video_path, step = get_args()
-    pallets_info = []
-    blue_dot_cords = None
-    blue_dot_counter = 0
-    counter = 0
+    objects_info = []
+    frame_counter = 0
     load_classificators()
 
     cap = cv2.VideoCapture(video_path)
@@ -107,82 +124,35 @@ def play_video():
     pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
     while True:
         flag, frame = cap.read()
-        counter += 1
         if flag:
-            height, width, layers = frame.shape
-            new_h = int(height / 4)
-            new_w = int(width / 4)
-            frame = cv2.resize(frame, (new_w, new_h))
+            frame = get_resized_frame(frame, reduce_factor=4)
 
-            # Zanjdź blue dot
-            # Jeżeli nie wykrywa blue dota
-            # poczekaj cały krok bez wykrycia żeby przestać go wyświetlać
-            new_blue_dot_cords = detect_blue_dot(frame)
-            if new_blue_dot_cords is None:
-                blue_dot_counter += 1
-                if blue_dot_counter == step:
-                    blue_dot_counter = 0
-                    blue_dot_cords = None
-            elif blue_dot_cords is None:
-                blue_dot_counter = 0
-                blue_dot_cords = new_blue_dot_cords
-            else:
-                blue_dot_counter = 0
+            # Wykrywaj obiekty tylko na co którejś klatce
+            if frame_counter % step == 0:
+                objects_info = []
+                objects_info += get_pallets_info(frame)
+                objects_info += get_blue_dot_info(frame)
 
-            if counter == step:
-                counter = 0
-                pallets_info = []
-                for pallet_classificator_info in PALLET_CLASSIFICATORS_INFO:
-                    pallets_cords = detect(
-                        frame, pallet_classificator=pallet_classificator_info["classificator"]
+            # Zaznaczaj obiekty na każdej klatce
+            for object_info in objects_info:
+                for (x, y, w, h) in object_info["cords"]:
+                    frame = cv2.putText(
+                        frame, object_info["text"], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        object_info["colour"], 1, cv2.LINE_AA
                     )
-                    pallets_info.append({
-                        "cords": pallets_cords,
-                        "colour": pallet_classificator_info["colour"]
-                    })
-                #  TODO detect pola odkładcze
-            pallets_counter = 0
-            x_sum = 0
-            y_sum = 0
-            w_sum = 0
-            h_sum = 0
-            for pallets in pallets_info:
-                for (x, y, w, h) in pallets["cords"]:
-                    pallets_counter += 1
-                    x_sum += x
-                    y_sum += y
-                    w_sum += w
-                    h_sum += h
-            if pallets_counter:
-                x = int(x_sum/pallets_counter)
-                y = int(y_sum/pallets_counter)
-                w = int(w_sum/pallets_counter)
-                h = int(h_sum/pallets_counter)
-                frame = cv2.putText(frame, "Paleta", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.5, pallets["colour"], 1, cv2.LINE_AA)
-                frame = cv2.rectangle(frame, (x, y), (x + w, y + h), pallets["colour"], 2)
-            if blue_dot_cords is not None:
-                x, y, r = blue_dot_cords
-                frame = cv2.putText(
-                    frame, "Blue dot", (x - r, y - r - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                    (255, 0, 0), 1, cv2.LINE_AA
-                )
-                frame = cv2.rectangle(frame, (x - r, y - r), (x + r, y + r), (255, 0, 0), 2)
+                    frame = cv2.rectangle(frame, (x, y), (x + w, y + h), object_info["colour"], 2)
             cv2.imshow('video', frame)
             pos_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
         else:
-            # The next frame is not ready, so we try to read it again
             cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame - 1)
             print("frame is not ready")
-            # It is better to wait for a while for the next frame to be ready
             if cv2.waitKey(1000) == 27:
                 break
         if cv2.waitKey(40) == 27:
             break
         if cap.get(cv2.CAP_PROP_POS_FRAMES) == cap.get(cv2.CAP_PROP_FRAME_COUNT):
-            # If the number of captured frames is equal to the total number of frames,
-            # we stop
             break
+        frame_counter += 1
 
 
 if __name__ == '__main__':

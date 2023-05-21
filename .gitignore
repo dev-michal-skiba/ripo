@@ -1,5 +1,5 @@
-**/*.jpg
-**/*.png
-**/*.MP4
 .idea
 __pycache__
+**/*.zip
+**/*.MP4
+europallet/negatives/
